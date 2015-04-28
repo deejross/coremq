@@ -22,13 +22,12 @@ Pubsub messages are immediately sent to connected clients. If the client is not 
 
 Example Server Usage
 --------------------
-By default, the server is started in its own process when calling `start()`. It will respond to SIGINT and SIGKILL signals:
+By default, the server is started in its own process when calling start(). It will respond to SIGINT and SIGKILL signals:
 
-```python
+```
 from coremq.coremq_server import start()
 start()
 ```
-
 
 Example Client Usage
 --------------------
@@ -43,7 +42,6 @@ m.subscribe('test')
 m.send_message(queue='test', message=dict(a=1))
 m.get_message()
 ```
-
 
 Future Developments
 -------------------
