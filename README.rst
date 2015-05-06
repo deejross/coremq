@@ -1,7 +1,7 @@
 CoreMQ
 ======
 
-CoreMQ is a pure-Python 2/3 messaging queue using TCP sockets with JSON object transport. It was developed after finding a lack of Python-based message queue systems, and also for educational purposes.
+CoreMQ is a pure-Python 2/3 messaging queue using `asyncio` sockets with JSON object transport. It was developed after finding a lack of Python-based message queue systems, and also for educational purposes.
 
 
 Current Status
@@ -9,7 +9,8 @@ Current Status
 * Live Publish/Subscribe of messaging
 * Point-to-point messaging
 * Retrieve up to 10 previous messages per queue
-* Very, very alpha; limited testing so far
+* Master-master replication
+* WebSocket server included
 * No encryption
 
 
@@ -20,18 +21,21 @@ Clients connect via TCP and optionally supply a list of queues to subscribe to a
 Pubsub messages are immediately sent to connected clients. If the client is not connected at the time the message is published, it will not recieve the message. This may be addressed in a later release.
 
 
-Example Server Usage
---------------------
-By default, the server is started in its own process when calling start(). It will respond to SIGINT and SIGKILL signals:
+Server Implementations
+----------------------
+There are currently two implementations: one that uses the ThreadingMixin with SocketServer (server.py), and another that uses the new asyncio module (aio_server.py), which provides an event loop, similar to how Node.js works. After having stress tested them both, the asyncio version proved to handle far more connections. Because of this, the SocketServer implementation is no longer being developed and is scheduled for removal.
 
-.. code:: python
+Running `python aio_server.py` will start the MQ server.
 
-  from coremq.coremq_server import start()
-  start()
+In addition to the Message Queue server, there is now a separate WebSocket server (ws_server.py) that works with the Message Queue server to provide real-time comminucations to browsers.
+
+Running `python ws_server.py` will start the WS server.
+
+See the configuration section below for more options.
 
 
-Example Client Usage
---------------------
+Example Client Usage (socket-based)
+-----------------------------------
 
 .. code:: python
 
@@ -45,14 +49,32 @@ Example Client Usage
   m.get_message()
 
 
+Example Client Usage (asyncio-based)
+------------------------------------
+Coming soon...
+
+
+Configuration File
+------------------
+Both servers look for a coremq.conf file on load in the current working directory. There is an example config file in this repository that can be used as a template. There are two sections, one for [CoreMQ] and one for [CoreWS]:
+
+* address: the interface to listen on, default 0.0.0.0
+* port: the port to listen on, default 6747
+* log_file: the location of the log file, default stdout
+* log_level: logging level, default DEBUG, other options: INFO, WARN, ERROR
+* cluster_nodes (CoreMQ only): comma-separated list of CoreMQ servers that should be considered a cluster
+* allowed_replicants (CoreMQ only): comma-separated list of servers that should be allowed to monitor all queues (cluster_nodes are automatically part of this list).
+
+The cluster_nodes settings should be exactly the same on every CoreMQ server in order to keep the cluster happy. In order to use CoreWS on a server that is not in cluster_nodes, add its server name to allowed_replicants.
+
+
 Future Developments
 -------------------
 This is a list of things I would like to add in the future:
+
 * Memcached-like in-memory store
-* WebSockets support
 * Custom JSON serializers/deserializers
 * HTTP status page
-* Master-master replication
 * Per queue settings (i.e. history length instead of the default of 10 messages)
 * Authentication and Authorization for queues
 * Status display (maybe an HTTP page)
