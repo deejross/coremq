@@ -24,15 +24,17 @@ Example Server Usage
 --------------------
 By default, the server is started in its own process when calling start(). It will respond to SIGINT and SIGKILL signals:
 
-```
+.. code:: python
+
 from coremq.coremq_server import start()
 start()
-```
+
 
 Example Client Usage
 --------------------
 
-```
+.. code:: python
+
 from coremq import MessageQueue
 m = MessageQueue('127.0.0.1')
 m.connect()
@@ -41,7 +43,7 @@ print(m.welcome_message)
 m.subscribe('test')
 m.send_message(queue='test', message=dict(a=1))
 m.get_message()
-```
+
 
 Future Developments
 -------------------
