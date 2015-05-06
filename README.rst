@@ -26,8 +26,8 @@ By default, the server is started in its own process when calling start(). It wi
 
 .. code:: python
 
-from coremq.coremq_server import start()
-start()
+  from coremq.coremq_server import start()
+  start()
 
 
 Example Client Usage
@@ -35,14 +35,14 @@ Example Client Usage
 
 .. code:: python
 
-from coremq import MessageQueue
-m = MessageQueue('127.0.0.1')
-m.connect()
-print(m.welcome_message)
->>> OK: Welcome from CoreMQ!
-m.subscribe('test')
-m.send_message(queue='test', message=dict(a=1))
-m.get_message()
+  from coremq import MessageQueue
+  m = MessageQueue('127.0.0.1')
+  m.connect()
+  print(m.welcome_message)
+  >>> OK: Welcome from CoreMQ!
+  m.subscribe('test')
+  m.send_message(queue='test', message=dict(a=1))
+  m.get_message()
 
 
 Future Developments
