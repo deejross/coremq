@@ -24,13 +24,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 
+import logging
 import json
+import os
 import sys
 
 if sys.version[0] == '2':
     str_type = basestring
+    from ConfigParser import ConfigParser, NoOptionError, NoSectionError
 else:
     str_type = str
+    from configparser import ConfigParser, NoOptionError, NoSectionError
+
+
+loggers = dict()
 
 
 class ConnectionClosed(Exception):
@@ -41,9 +48,17 @@ class ProtocolError(Exception):
     pass
 
 
-def send_message(socket, queue, message):
+class CoreConfigParser(ConfigParser, object):
+    def get(self, section, option, default=None):
+        try:
+            return super(CoreConfigParser, self).get(section, option)
+        except (NoOptionError, NoSectionError):
+            return default
+
+
+def construct_message(queue, message):
     if not isinstance(queue, str_type):
-        raise ValueError('Queue name must be a string')
+        raise ValueError('Queue name must be a string, not %s' % queue)
 
     if len(queue) < 1:
         raise ValueError('Queue name must be at least one character in length')
@@ -51,7 +66,7 @@ def send_message(socket, queue, message):
     if ' ' in queue:
         raise ValueError('Queue name must not contain spaces')
 
-    if isinstance(message, str):
+    if isinstance(message, str_type):
         message = dict(coremq_string=message)
 
     if isinstance(message, dict):
@@ -65,8 +80,11 @@ def send_message(socket, queue, message):
     if not isinstance(message, bytes):
         message = message.encode('utf-8')
 
-    data = ('+%s %s ' % (len(message) + len(queue) + 1, queue)).encode('utf-8') + message
-    socket.send(data)
+    return ('+%s %s ' % (len(message) + len(queue) + 1, queue)).encode('utf-8') + message
+
+
+def send_message(socket, queue, message):
+    socket.send(construct_message(queue, message))
 
 
 def get_message(socket, timeout=1):
@@ -108,3 +126,72 @@ def validate_header(data):
         raise ProtocolError('Length integer must be between + and space')
 
     return length, data
+
+
+def load_configuration(path=None):
+    """
+    Loads configuration for CoreMQ and CoreWS servers
+    :param path: Optional path for the config file. Defaults to current directory
+    :return: CoreConfigParser
+    """
+    if not path:
+        path = os.path.join(os.getcwd(), 'coremq.conf')
+
+    c = CoreConfigParser()
+
+    try:
+        c.read(path)
+    except:
+        logging.error('Config file could not be loaded')
+
+    return c
+
+
+def get_logger(config, section, logger_name=None):
+    """
+    Configures the Python logging module based on the configuration settings from load_configuration
+    :param config:  The CoreConfigParser instance from load_configuration
+    :param section: The section where the logging config can be found
+    :param logger_name: The name of the logger. Uses section by default
+    :return: Logger
+    """
+    logging.basicConfig()
+
+    if section in loggers:
+        return loggers[section]
+
+    logger = logging.getLogger(section or logger_name)
+    logger.propagate = False
+
+    log_file = config.get('CoreMQ', 'log_file', 'stdout')
+    if log_file == 'stdout':
+        handler = logging.StreamHandler()
+    else:
+        handler = logging.FileHandler(log_file)
+
+    log_level = config.get('CoreMQ', 'log_level', 'DEBUG')
+    logger.setLevel(logging.getLevelName(log_level))
+
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    handler.setFormatter(formatter)
+
+    logger.addHandler(handler)
+    loggers[section] = logger
+    return logger
+
+
+def comma_string_to_list(s):
+    """
+    Takes a line of values, seprated by commas and returns the values in a list, removing any extra whitespacing.
+    :param s: The string with commas
+    :return: list
+    """
+    if isinstance(s, (list, tuple)):
+        return s
+
+    result = []
+    items = s.split(',')
+    for i in items:
+        result.append(i.strip())
+
+    return result

@@ -23,7 +23,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
-
+from asyncio import Protocol
 import collections
 import signal
 import socket
@@ -31,7 +31,7 @@ import sys
 import time
 import uuid
 from multiprocessing import Process
-from coremq_common import ConnectionClosed, get_message, send_message
+from common import ConnectionClosed, get_message, send_message
 
 PY2 = sys.version[0] == '2'
 
