@@ -48,6 +48,7 @@ class CoreMqClientFactory(object):
         self.initial_subscriptions = subscriptions
         self.lost_connection_callback = None
         self.connected_once = False
+        self.connected_server = None
 
     def __call__(self, *args, **kwargs):
         return self.protocol(self, loop=self.loop, logger=self.logger, subscriptions=self.initial_subscriptions)
@@ -64,6 +65,7 @@ class CoreMqClientFactory(object):
     @asyncio.coroutine
     def connect(self):
         self.connection = None
+        self.connected_server = None
         port = self.port
         for server in self.servers:
             if ':' in server:
@@ -72,9 +74,11 @@ class CoreMqClientFactory(object):
             for i in range(self.attempts):
                 try:
                     self.connection = yield asyncio.From(self.loop.create_connection(self, server, port))
+                    self.connected_server = server
                     break
                 except (OSError, socket.gaierror, socket.herror) as ex:
                     self.connection = None
+                    self.connected_server = None
                     self.logger.warn('Failed to connect to CoreMQ %s: %s. Retrying in 1 second...' % (server, ex))
                     yield asyncio.From(asyncio.sleep(1))
 

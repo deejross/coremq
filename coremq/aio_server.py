@@ -226,12 +226,17 @@ class CoreMqServerProtocol(asyncio.Protocol):
     def get_status(self, to):
         if ServerState.master is None:
             self.send_message(to, dict(
+                coremq_fwdto=to,
                 master=ServerState.name,
                 replicants=list(ServerState.replicant_id_to_name.values()),
                 connections=len(ServerState.connections)
             ))
         else:
-            ServerState.master.send_message(self.uuid, dict(coremq_status=True, coremq_fwdto=to))
+            self.send_message(to, dict(
+                replicant_of=ServerState.master.factory.connected_server,
+                replicants=list(ServerState.replicant_id_to_name.values()),
+                connections=len(ServerState.connections)
+            ))
 
     @staticmethod
     @asyncio.coroutine
@@ -245,7 +250,7 @@ class CoreMqServerProtocol(asyncio.Protocol):
     @asyncio.coroutine
     def broadcast(queue, message):
         if ServerState.master and 'coremq_master' not in message:
-            if 'coremq_fwdto' not in message:
+            if 'coremq_fwdto' not in message and 'coremq_sender' in message:
                 message['coremq_fwdto'] = message['coremq_sender']
 
             ServerState.master.send_message(queue, message)
@@ -258,7 +263,7 @@ class CoreMqServerProtocol(asyncio.Protocol):
                 c.send_message(queue, message)
 
         for i, c in ServerState.connections.items():
-            if i == message['coremq_sender'] or c.is_replicant:
+            if i == message.get('coremq_sender', None) or c.is_replicant:
                 continue
 
             if queue in c.subscriptions:

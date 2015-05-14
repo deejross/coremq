@@ -74,6 +74,15 @@ class WsProtocol(WebSocketServerProtocol):
             for q in queues:
                 if q not in self.subscriptions:
                     self.subscriptions.append(q)
+        elif 'corews_status' in message:
+            mq_server = None
+            if ServerState.mq_connection:
+                mq_server = ServerState.mq_connection.factory.connected_server
+
+            self.sendMessage(json.dumps(dict(
+                connections=len(ServerState.connections),
+                mq_server=mq_server
+            )))
         else:
             if 'queue' not in message:
                 self.sendMessage(json.dumps(dict(error='Command not recognized')))
