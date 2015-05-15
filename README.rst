@@ -81,4 +81,4 @@ This is a list of things I would like to add in the future:
 
 Contributions
 -------------
-As always, contributions in any form are appreciated. This is more of a learning experiment and is not currently used in production, however, I hope that this will one day be used to power a WebSockets implementation that can be easily used with Django, or other Python-based web apps.
+As always, contributions in any form are appreciated. This started as more of a learning experiment and quickly became a way to power a WebSockets implementation that can be easily used with Django, or other Python-based web apps.
