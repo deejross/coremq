@@ -1,7 +1,7 @@
 CoreMQ
 ======
 
-CoreMQ is a pure-Python 2/3 messaging queue using `asyncio` sockets with JSON object transport. It was developed after finding a lack of Python-based message queue systems, and also for educational purposes.
+CoreMQ is a pure-Python 2/3 messaging queue using `asyncio` sockets with JSON object transport. It was developed after finding a lack of Python-based message queue systems, and also for educational purposes. However, it is currently being used in production with about 60 concurrent users.
 
 
 Current Status
@@ -77,7 +77,6 @@ This is a list of things I would like to add in the future:
 * HTTP status page
 * Per queue settings (i.e. history length instead of the default of 10 messages)
 * Authentication and Authorization for queues
-* Status display (maybe an HTTP page)
 
 
 Contributions
